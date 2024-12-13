@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screen Capture</title>
+</head>
+<body>
+  <h1>Capture Screen and Send to Telegram</h1>
+
+  <!-- Кнопка для захвата экрана -->
+  <button id="captureBtn">Capture Screen</button>
+
+  <!-- Здесь будет отображаться скриншот -->
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script>
+    const captureBtn = document.getElementById('captureBtn');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    let telegramBotToken = '7885047021:AAG6h0cm_VRrvs3dzROMtYn9Hqi2e7qjxp4'; // Ваш токен Telegram-бота
+    let chatId = '7200204699'; // Ваш ID чата (или ID группы)
+
+    // Функция для захвата экрана
+    captureBtn.addEventListener('click', async () => {
+      try {
+        // Захват экрана пользователя
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+        });
+
+        // Создаем видеопоток, чтобы захватить изображение
+        const video = document.createElement('video');
+        video.srcObject = stream;
+
+        video.onloadedmetadata = () => {
+          video.play();
+          // Устанавливаем размер canvas в размер видео
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          // Рисуем изображение на canvas
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          // Получаем base64 изображение
+          const imageUrl = canvas.toDataURL('image/png');
+
+          // Останавливаем поток
+          stream.getTracks().forEach(track => track.stop());
+
+          // Отправляем изображение на Telegram
+          sendToTelegram(imageUrl);
+        };
+      } catch (err) {
+        console.error("Error capturing screen: ", err);
+      }
+    });
+
+    // Функция для отправки изображения в Telegram
+    function sendToTelegram(imageUrl) {
+      fetch(`https://api.telegram.org/bot${telegramBotToken}/sendPhoto`, {
+        method: 'POST',
+        body: new URLSearchParams({
+          chat_id: chatId,
+          photo: imageUrl,
+        }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.ok) {
+            alert('Screenshot sent to Telegram!');
+          } else {
+            alert('Failed to send screenshot.');
+          }
+        })
+        .catch(error => {
+          console.error("Error sending screenshot to Telegram: ", error);
+        });
+    }
+    captureBtn.addEventListener('click', async () => {
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+    console.log('Screen captured successfully');
+  } catch (err) {
+    console.error("Error capturing screen: ", err);
+    alert('Failed to capture screen: ' + err.message);
+  }
+});
+
+  </script>
+</body>
+</html>
